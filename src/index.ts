@@ -1,24 +1,16 @@
-// src/index.ts
 import express from "express";
 import cors from "cors";
-import router from "./routes/opportunities.js";
+import { opportunitiesRouter } from "./routes/opportunities.js";
 
 const app = express();
+const PORT = process.env.PORT || 10000;
 
-// middleware-uri de bază
 app.use(cors());
 app.use(express.json());
 
-// rute
-app.use("/", router);
+// ✅ Aici montăm ruta
+app.use("/opportunities", opportunitiesRouter);
 
-// health check simplu
-app.get("/healthz", (_, res) => {
-  res.json({ ok: true });
-});
-
-// pornește serverul
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`✅ Server live pe portul ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
