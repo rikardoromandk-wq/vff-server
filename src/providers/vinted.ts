@@ -46,3 +46,20 @@ export async function getVintedItems(query: string, minMargin: number) {
           lastSoldDate: new Date().toISOString().split("T")[0],
           condition: item.status || "Bun",
           size: item.size_title,
+          image: item.photo?.url,
+          url: `https://www.vinted.dk/items/${item.id}`,
+          comps: [],
+          totalCost,
+          profit: Math.round(profit),
+          margin: Number(margin.toFixed(2)),
+          confidence: 0.5,
+        };
+      })
+      .filter((item: any) => item.margin >= minMargin);
+
+    return items;
+  } catch (err) {
+    console.error("Eroare la fetch Vinted:", err);
+    throw err;
+  }
+} // ✅ aceasta este acolada lipsă, închide funcția
