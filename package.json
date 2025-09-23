@@ -3,10 +3,8 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "node --watch dist/index.js",
-    "build": "tsc -p .",
-    "start": "node dist/index.js",
-    "render-build": "tsc -p ."
+    "render-build": "tsc -p .",
+    "start": "node dist/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
