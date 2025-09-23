@@ -7,19 +7,16 @@ import { router as opportunities } from "./routes/opportunities.js";
 const app = express();
 const log = pino({ level: "info" });
 
-// Middleware-uri
+// Middleware
 app.use(cors());
 app.use(express.json());
 
-// Health check
+// Health check pentru Render
 app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// Rute pentru oportunități
-app.use(opportunities);
-
-// Răspuns pe ruta principală "/"
+// Ruta principală "/" – doar pentru test
 app.get("/", (_req: Request, res: Response) => {
   res.json({
     items: [
@@ -36,4 +33,23 @@ app.get("/", (_req: Request, res: Response) => {
         condition: "Foarte bun",
         size: "S",
         image:
-          "https://images.unsplash.com/photo-1520975916090-3105956
+          "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200&auto=format&fit=crop",
+        url: "https://www.vinted.dk/",
+        comps: [
+          { price: 640, date: "2025-09-05" },
+          { price: 660, date: "2025-08-18" },
+        ],
+        totalCost: 480,
+        profit: 170,
+        margin: 35.41,
+        confidence: 0.5,
+      },
+    ],
+  });
+});
+
+// Router pentru oportunități
+app.use(opportunities);
+
+// Pornire server
+const PORT = process.env.PORT || env.
