@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Request, type Response } from "express";
 import { z } from "zod";
 import { MockProvider } from "../providers/mock.js";
 import { scoreListing, sortByKey } from "../scoring.js";
@@ -15,7 +15,7 @@ const querySchema = z.object({
 
 export const router = Router();
 
-router.get("/opportunities", async (req, res) => {
+router.get("/opportunities", async (req: Request, res: Response) => {
   const q = querySchema.safeParse(req.query);
   if (!q.success) return res.status(400).json({ error: q.error.flatten() });
 
