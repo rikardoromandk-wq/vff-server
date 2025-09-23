@@ -1,18 +1,19 @@
-import express from "express";
-import { getVintedItems } from "../providers/vinted.js";
+import { Router } from "express";
+import { VintedProvider } from "../providers/vinted.js";
 
-const router = express.Router();
+export const opportunitiesRouter = Router();
 
-router.get("/", async (req, res) => {
+opportunitiesRouter.get("/", async (req, res) => {
   try {
-    const query = (req.query.q as string) || "";
-    const minMargin = Number(req.query.minMargin || 20);
+    const { q, minMargin } = req.query;
+    const data = await VintedProvider({
+      query: q as string,
+      minMargin: minMargin ? Number(minMargin) : 0,
+    });
 
-    const items = await getVintedItems(query, minMargin);
-    res.json({ items, meta: { count: items.length } });
-  } catch (err: any) {
-    res.status(500).json({ error: "Eroare la preluarea datelor Vinted", detail: err.message });
+    res.json({ items: data, meta: { count: data.length } });
+  } catch (err) {
+    console.error("Eroare la preluarea datelor Vinted:", err);
+    res.status(500).json({ error: "Eroare la preluarea datelor Vinted" });
   }
 });
-
-export default router;
