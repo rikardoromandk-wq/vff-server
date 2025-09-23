@@ -1,11 +1,11 @@
 import { Router, type Request, type Response } from "express";
 import { z } from "zod";
-import { MockProvider } from "../providers/mock.js";
+import { VintedProvider } from "../providers/vinted.js";
 import { scoreListing, sortByKey } from "../scoring.js";
 import { env } from "../config.js";
 
 const querySchema = z.object({
-  q: z.string().optional(),
+  q: z.string().optional(),                 // text căutare (brand, model etc)
   brand: z.string().optional(),
   minMargin: z.coerce.number().min(0).max(95).default(20),
   highConf: z.coerce.boolean().default(false),
@@ -20,12 +20,17 @@ router.get("/opportunities", async (req: Request, res: Response) => {
   if (!q.success) return res.status(400).json({ error: q.error.flatten() });
 
   const { q: query, brand, minMargin, highConf, sort, limit } = q.data;
-  const raw = await MockProvider.getRecentListings({ query, brand });
 
-  const scored = raw.map(scoreListing)
-    .filter(i => i.margin >= minMargin)
-    .filter(i => (highConf ? i.confidence >= env.MIN_CONFIDENCE_HIGH : true));
+  try {
+    const raw = await VintedProvider.getRecentListings({ query, brand });
 
-  const sorted = sortByKey(scored, sort).slice(0, limit);
-  res.json({ items: sorted, meta: { count: sorted.length } });
+    const scored = raw.map(scoreListing)
+      .filter(i => i.margin >= minMargin)
+      .filter(i => (highConf ? i.confidence >= env.MIN_CONFIDENCE_HIGH : true));
+
+    const sorted = sortByKey(scored, sort).slice(0, limit);
+    res.json({ items: sorted, meta: { count: sorted.length } });
+  } catch (e: any) {
+    res.status(502).json({ error: "Eroare la preluarea datelor Vinted", detail: String(e?.message ?? e) });
+  }
 });
