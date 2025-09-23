@@ -52,4 +52,7 @@ app.get("/", (_req: Request, res: Response) => {
 app.use(opportunities);
 
 // Pornire server
-const PORT = process.env.PORT || env.
+const PORT = process.env.PORT || env.PORT || 10000;
+app.listen(PORT, () => {
+  log.info(`Server listening on port ${PORT}`);
+});
