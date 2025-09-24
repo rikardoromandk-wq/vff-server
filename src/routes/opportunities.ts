@@ -12,7 +12,7 @@ router.get("/", async (req, res) => {
 
     const items = await fetchVintedItems(q, minMargin);
 
-    console.log(`✅ Got ${items.length} items from Vinted`);
+    console.log(`✅ Got ${items.length} items from Vinted (or fallback)`);
 
     res.json({ items, meta: { count: items.length } });
   } catch (error: any) {
