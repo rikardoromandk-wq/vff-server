@@ -1,25 +1,27 @@
-import { Router, type Request, type Response } from "express";
-import { z } from "zod";
-import { getVintedItems } from "../providers/vinted.js";
+import express from "express";
+import { fetchVintedItems } from "../providers/vinted.js";
 
-const router = Router();
+const router = express.Router();
 
-const querySchema = z.object({
-  q: z.string().optional().default(""),
-  minMargin: z.coerce.number().optional().default(0)
-});
-
-router.get("/opportunities", async (req: Request, res: Response) => {
-  const q = querySchema.safeParse(req.query);
-  if (!q.success) return res.status(400).json({ error: q.error.flatten() });
-
+router.get("/", async (req, res) => {
   try {
-    const items = await getVintedItems(q.data.q, q.data.minMargin);
-    return res.json({ items, meta: { count: items.length } });
-  } catch (err: any) {
-    return res
-      .status(500)
-      .json({ error: "Eroare la preluarea datelor Vinted", detail: String(err?.message || err) });
+    const q = req.query.q?.toString() || "";
+    const minMargin = parseFloat(req.query.minMargin?.toString() || "0");
+
+    console.log(`🔎 Received request: q="${q}", minMargin=${minMargin}`);
+
+    const items = await fetchVintedItems(q, minMargin);
+
+    console.log(`✅ Got ${items.length} items from Vinted`);
+
+    res.json({ items, meta: { count: items.length } });
+  } catch (error: any) {
+    console.error("❌ Eroare la preluarea datelor Vinted:", error?.message || error);
+
+    res.status(500).json({
+      error: "Eroare la preluarea datelor Vinted",
+      detail: error?.message || String(error),
+    });
   }
 });
 
