@@ -2,21 +2,19 @@
   "name": "vff-server",
   "version": "0.1.0",
   "type": "module",
+  "main": "dist/server.js",
   "scripts": {
-    "render-build": "tsc -p .",
-    "start": "node dist/index.js"
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "ts-node-esm src/server.ts",
+    "render-build": "npm run build"
   },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "node-fetch": "^3.3.2",
-    "pino": "^9.4.0",
-    "zod": "^3.23.8"
+    "fastify": "^4.27.0"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
-    "@types/express": "^4.17.21",
+    "typescript": "^5.6.3",
     "@types/node": "^20.11.30",
-    "typescript": "^5.5.4"
+    "ts-node": "^10.9.2"
   }
 }
