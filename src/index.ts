@@ -1,18 +1,18 @@
 import express from "express";
 import cors from "cors";
-import opportunitiesRouter from "./routes/opportunities.js";
+import pino from "pino";
+import router from "./routes/opportunities.js";
 
 const app = express();
+const log = pino();
+const PORT = Number(process.env.PORT || 10000);
 
 app.use(cors());
 app.use(express.json());
 
-// ✅ Montăm ruta corect
-app.use("/opportunities", opportunitiesRouter);
+app.get("/", (_req, res) => res.send("VFF server OK"));
+app.use("/", router);
 
-app.get("/healthz", (_, res) => res.json({ ok: true }));
-
-const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-  console.log(`✅ Server live pe portul ${PORT}`);
+  log.info({ msg: "server listening", port: PORT });
 });
