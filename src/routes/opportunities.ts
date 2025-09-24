@@ -1,28 +1,39 @@
-import express from "express";
+import { FastifyInstance } from "fastify";
 import { fetchVintedItems } from "../providers/vinted.js";
 
-const router = express.Router();
+export default async function opportunitiesRoutes(fastify: FastifyInstance) {
+  fastify.get("/opportunities", async (request, reply) => {
+    try {
+      // ✅ 1. Citim query params
+      const { q, minMargin } = request.query as {
+        q?: string;
+        minMargin?: string;
+      };
 
-router.get("/", async (req, res) => {
-  try {
-    const q = req.query.q?.toString() || "";
-    const minMargin = parseFloat(req.query.minMargin?.toString() || "0");
+      // ✅ 2. Facem fetch la produse de pe Vinted (folosim doar query-ul)
+      const items = await fetchVintedItems(q ?? "");
 
-    console.log(`🔎 Received request: q="${q}", minMargin=${minMargin}`);
+      // ✅ 3. Filtrăm după minMargin dacă e setat
+      let filteredItems = items;
+      if (minMargin) {
+        const min = parseFloat(minMargin);
+        if (!isNaN(min)) {
+          filteredItems = items.filter((item) => {
+            const price = parseFloat(item.price.amount);
+            return price >= min;
+          });
+        }
+      }
 
-    const items = await fetchVintedItems(q, minMargin);
+      // ✅ 4. Returnăm datele ca JSON
+      return reply.send({
+        items: filteredItems,
+        meta: { count: filteredItems.length },
+      });
 
-    console.log(`✅ Got ${items.length} items from Vinted (or fallback)`);
-
-    res.json({ items, meta: { count: items.length } });
-  } catch (error: any) {
-    console.error("❌ Eroare la preluarea datelor Vinted:", error?.message || error);
-
-    res.status(500).json({
-      error: "Eroare la preluarea datelor Vinted",
-      detail: error?.message || String(error),
-    });
-  }
-});
-
-export default router;
+    } catch (error) {
+      console.error("❌ Error in /opportunities route:", error);
+      return reply.status(500).send({ error: "Internal server error" });
+    }
+  });
+}
