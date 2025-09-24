@@ -1,18 +1,25 @@
 import express from "express";
 import cors from "cors";
-import pino from "pino";
-import router from "./routes/opportunities.js";
+import opportunitiesRouter from "./routes/opportunities.js";
 
 const app = express();
-const log = pino();
-const PORT = Number(process.env.PORT || 10000);
+const PORT = process.env.PORT || 3000;
 
+// ✅ CORS activat pentru toată aplicația
 app.use(cors());
+
+// ✅ JSON body parser
 app.use(express.json());
 
-app.get("/", (_req, res) => res.send("VFF server OK"));
-app.use("/", router);
+// ✅ Montează ruta /opportunities
+app.use("/opportunities", opportunitiesRouter);
 
+// ✅ Ruta principală (test)
+app.get("/", (_req, res) => {
+  res.send("✅ VFF Server is running. Use /opportunities?q=Nike");
+});
+
+// ✅ Pornire server
 app.listen(PORT, () => {
-  log.info({ msg: "server listening", port: PORT });
+  console.log(`🚀 Server running on port ${PORT}`);
 });
