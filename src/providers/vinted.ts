@@ -1,66 +1,69 @@
+// src/providers/vinted.ts
 import fetch from "node-fetch";
 
-const VINTED_URL = "https://www.vinted.dk/api/v2/catalog/items";
-const VINTED_COOKIE = process.env.VINTED_COOKIE || "";
-
-// tip minimal pentru iteme
 export interface VintedItem {
   id: number;
   title: string;
-  price?: { amount: string; currency_code: string };
-  brand_title?: string;
-  size_title?: string;
-  photo?: { url: string };
+  brand_title: string;
+  price: { amount: string; currency_code: string };
+  size_title: string;
+  photo: { url: string };
 }
 
-const MOCK_ITEMS: VintedItem[] = [
-  {
-    id: 1,
-    title: "Ganni Silk Dress (Demo)",
-    brand_title: "Ganni",
-    price: { amount: "350.00", currency_code: "DKK" },
-    size_title: "S",
-    photo: {
-      url: "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200&auto=format&fit=crop",
-    },
-  },
-];
-
-export async function fetchVintedItems(
-  query: string,
-  minMargin: number = 0
-): Promise<VintedItem[]> {
+export async function fetchVintedItems(query: string = ""): Promise<VintedItem[]> {
   try {
-    console.log("🔗 Fetching from Vinted API...", query);
+    const cookie = process.env.VINTED_COOKIE;
+    if (!cookie) {
+      console.warn("⚠️ VINTED_COOKIE is missing in environment variables.");
+      return [];
+    }
 
-    const url = `${VINTED_URL}?search_text=${encodeURIComponent(query)}&per_page=20&page=1`;
+    const url = `https://www.vinted.dk/api/v2/catalog/items?search_text=${encodeURIComponent(
+      query
+    )}&per_page=20&page=1`;
+
+    console.log(`🔗 Fetching from: ${url}`);
 
     const response = await fetch(url, {
       headers: {
-        Cookie: `_vinted_fr_session=${VINTED_COOKIE}`,
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0 Safari/537.36",
-        Accept: "application/json, text/plain, */*",
+        cookie: `_vinted_fr_session=${cookie}`,
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+        referer: "https://www.vinted.dk/",
+        accept: "application/json, text/plain, */*",
+        "accept-language": "en-US,en;q=0.9",
+        "x-requested-with": "XMLHttpRequest",
       },
     });
 
+    if (response.status === 403) {
+      console.error("❌ Vinted API returned 403 (blocked by Cloudflare)");
+      return [];
+    }
+
     if (!response.ok) {
-      console.error("❌ Vinted API error:", response.status, await response.text());
-      throw new Error(`Vinted API responded with ${response.status}`);
+      console.error(`❌ Vinted API error: ${response.status}`);
+      return [];
     }
 
-    const data: any = await response.json();
+    const json: unknown = await response.json();
 
-    console.log("✅ Vinted API response received. Items:", data.items?.length || 0);
-
-    if (!data.items || data.items.length === 0) {
-      console.warn("⚠️ API returned empty items array, fallback to mock data.");
-      return MOCK_ITEMS;
+    // Type guard to be safe
+    if (
+      typeof json === "object" &&
+      json !== null &&
+      "items" in json &&
+      Array.isArray((json as any).items)
+    ) {
+      const items = (json as any).items as VintedItem[];
+      console.log(`✅ Got ${items.length} items from Vinted`);
+      return items;
     }
 
-    return data.items;
-  } catch (error: any) {
-    console.error("❌ Failed to fetch Vinted items:", error.message || error);
-    return MOCK_ITEMS;
+    console.warn("⚠️ Unexpected response format from Vinted", json);
+    return [];
+  } catch (err) {
+    console.error("❌ Error fetching Vinted items:", err);
+    return [];
   }
 }
