@@ -56,7 +56,7 @@ function compute(item: {
     totalCost,
     profit,
     margin: Number(margin.toFixed(2)),
-    confidence: 0.6
+    confidence: 0.6,
   };
 }
 
@@ -76,11 +76,11 @@ async function callVinted(q: string, useCookie: boolean) {
   const headers: Record<string, string> = {
     "User-Agent":
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-    "Accept": "application/json",
+    Accept: "application/json",
     "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://www.vinted.dk/",
+    Referer: "https://www.vinted.dk/",
     "Cache-Control": "no-cache",
-    "Pragma": "no-cache"
+    Pragma: "no-cache",
   };
   if (useCookie && cookie) headers["Cookie"] = cookie;
 
@@ -109,34 +109,42 @@ const MOCK: ItemOut[] = [
     url: "https://www.vinted.dk/",
     comps: [
       { price: 640, date: "2025-09-05" },
-      { price: 660, date: "2025-08-18" }
+      { price: 660, date: "2025-08-18" },
     ],
     totalCost: 480,
     profit: 170,
     margin: 35.41,
-    confidence: 0.5
-  }
+    confidence: 0.5,
+  },
 ];
 
 export async function getVintedItems(q: string, minMargin: number): Promise<ItemOut[]> {
-  // 1) încearcă cu cookie (dacă există)
   try {
-    const items = await callVinted(q, true);
-    const out = items.map(compute).filter((i) => i.margin >= minMargin);
-    if (out.length) return out.sort((a, b) => b.profit - a.profit);
+    // 1) încearcă cu cookie (dacă există)
+    const itemsWithCookie: any[] = await callVinted(q, true);
+    const outWithCookie = itemsWithCookie
+      .map((i: any) => compute(i))
+      .filter((i: ItemOut) => i.margin >= minMargin)
+      .sort((a: ItemOut, b: ItemOut) => b.profit - a.profit);
+
+    if (outWithCookie.length > 0) return outWithCookie;
   } catch {
-    // ignorăm, încercăm fără cookie
+    // ignoră și încearcă fără cookie
   }
 
-  // 2) fără cookie
   try {
-    const items = await callVinted(q, false);
-    const out = items.map(compute).filter((i) => i.margin >= minMargin);
-    if (out.length) return out.sort((a, b) => b.profit - a.profit);
+    // 2) fără cookie
+    const itemsNoCookie: any[] = await callVinted(q, false);
+    const outNoCookie = itemsNoCookie
+      .map((i: any) => compute(i))
+      .filter((i: ItemOut) => i.margin >= minMargin)
+      .sort((a: ItemOut, b: ItemOut) => b.profit - a.profit);
+
+    if (outNoCookie.length > 0) return outNoCookie;
   } catch {
-    // trecem la mock
+    // ignoră, mergem la fallback
   }
 
-  // 3) fallback mock
-  return MOCK.filter((i) => i.margin >= minMargin);
+  // 3) fallback cu mock
+  return MOCK.filter((i: ItemOut) => i.margin >= minMargin);
 }
